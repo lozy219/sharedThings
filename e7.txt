@@ -1,0 +1,2 @@
+1. when a new page is loaed, the position is updated
+2. better replacement of elements, easy for user to drag
