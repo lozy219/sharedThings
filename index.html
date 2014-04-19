@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
     		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
 		<title>Shared Things</title>
 		<!-- JQuery etc... -->
@@ -22,13 +22,11 @@
 
     <link href="style.css" rel="stylesheet">
 		<script>
-    var worldname;
-			var world = {
-              "x1":{"x":70,"y":112.5}, "x2":{"x":70,"y":112.5}, "x3":{"x":70,"y":112.5},
-              "x4":{"x":70,"y":112.5}, "x5":{"x":70,"y":112.5}, "o1":{"x":70,"y":112.5},
-              "o2":{"x":70,"y":112.5}, "o3":{"x":70,"y":112.5}, "o4":{"x":70,"y":112.5},
-              "o5":{"x":70,"y":112.5}, "tttboard":{"x":70,"y":112.5}
-            };
+    var worldname='';
+			var world = {"x1":{"x":8,"y":8}, "x2":{"x":8,"y":51}, "x3":{"x":8,"y":94},
+             "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":260,"y":8},
+             "o2":{"x":260,"y":51}, "o3":{"x":260,"y":94}, "o4":{"x":260,"y":137},
+             "o5":{"x":260,"y":180},"tttboard":{"x":70,"y":30}};
 
       function logDrag(event, ui){
         // get the current target from the world state
@@ -48,31 +46,45 @@
 
       var currentLocation ={};
       var map;
-      function initialize(location) {
+
+      function initialize() {
         var mapOptions = {
-          center: location,
-          zoom: 10
+          center: currentLocation,
+          zoom: 6
         };
 
         map = new google.maps.Map(document.getElementById("map-canvas"),
             mapOptions);
 
         var marker = new google.maps.Marker({
-                position:location,
+                position:currentLocation,
                 title:"Player",
         });
 
-        google.maps.event.addListener(marker,'click',function() {
-          map.setZoom(16);
-          map.setCenter(marker.getPosition());
-          console.log(this.getTitle());
-        });
+        // google.maps.event.addListener(marker,'click',function() {
+        //   map.setZoom(16);
+        //   map.setCenter(marker.getPosition());
+        //   console.log(this.getTitle());
+        // });
 
         marker.setMap(map);
 
       }
+      function displayPlayer(clients) {
+          // for all the users in this map, display then as a marker
+          for (var i=0;i<clients.length;i++) {
+            console.log(clients[i]);
+            var marker = new google.maps.Marker({
+                position:clients[i],
+                title:"Player",
+            });
+            marker.setMap(map);
+          }
+      }
 
-      
+      // a table stored 
+      var players = {};
+
       $(function() { 
         //Map API
         if ("geolocation" in navigator) {
@@ -81,52 +93,75 @@
               currentLocation.lat = position.coords.latitude;
               currentLocation.lng = position.coords.longitude;
               console.log(currentLocation);
-              initialize(currentLocation);
+              if (worldname!='') {
+                initialize();
+              }
+              // sending current location to the server
             });
         } else {
           /* geolocation IS NOT available */
-          alert("no");
+          alert("Geolocation cannot be used on your device!");
+          $('#right').remove();
+          $('#left').removeClass("col-md-6");
+          $('#left').addClass("col-md-12");
+
         }
 
         // Mobile features
         // shake to reset
         window.ondevicemotion = function(event) {
-                var ax = Math.round(event.acceleration.x);
+          if (worldname!='') {
+            var ax = Math.round(event.acceleration.x);
                 var ay = Math.round(event.acceleration.y);
                 var az = Math.round(event.acceleration.z);
 
                 // if shake detected, reset the world
-                var data = {"type":"reset"};
+                var data = {"type":"reset", "world":worldname};
                 if (Math.abs(ax)>50 || Math.abs(ay)>50 || Math.abs(az)>50) {
                   socket.send(JSON.stringify(data));
                 }
-            };
+          }       
+        };
 
-        socket = new WebSocket("ws://localhost:"+port);
+        socket = new WebSocket("ws://128.199.215.175:"+port);
         socket.onopen = function (event) {
           console.log("connected");
         };
 
         socket.onclose = function (event) {
           console.log("closed code:" + event.code + " reason:" +event.reason + " wasClean:"+event.wasClean);
+          // delete the current location in the server
         };
         
         socket.onmessage = function (event) {
           var received = JSON.parse(event.data);
           if (received.type=='list') {
             var list = JSON.parse(received.data);
+            
             $('#worldList').html("<option disabled selected>Join a world</option>");
-            for (var i=0;i<list.length;i++)
+            $('#home-worldList').html("<option disabled selected>Join a world</option>");
+            for (var i=0;i<list.length;i++) {
               $('#worldList').append('<option value = "'+list[i]+'">'+list[i]+'</option>');
+              $('#home-worldList').append('<option value = "'+list[i]+'">'+list[i]+'</option>');
+            }
           }
+
           if (received.type=='success') {
             worldname= received.world;
-            $('.draggable').show();
             alert(received.data);
+            // show game view
+            $('#front').hide();
+            $('#left').show();
+            $('#right').show();
+
+            // create success, initialize the map using self-location
+            initialize();
           }
+
           if (received.type=='error') {
             alert(received.data);
           }
+          
 
           if (received.world==worldname) {
             // if the data received is to initialize the game
@@ -152,6 +187,13 @@
               $("#"+received.id).css("left",world[received.id].x);
               $("#"+received.id).css("top",world[received.id].y);
             }
+            if (received.type=="geo") {
+                console.log('GEO: '+received.data);
+                // display the player using received data
+                displayPlayer(JSON.parse(received.data));
+
+          } 
+            
           }
 
           
@@ -165,7 +207,7 @@
           var name = $('#input-name').val();
           $('#input-name').val('');
           // preparing new world data
-          var data = {"type":"create","world":name};
+          var data = {"type":"create","world":name,"gps":JSON.stringify(currentLocation)};
               socket.send(JSON.stringify(data));
         });
 
@@ -174,11 +216,40 @@
           //get the selected world name
           var name = $('#worldList :selected').val();
           // preparing to request world data
-          var data = {"type":"join","world":name};
+          var data = {"type":"join","world":name, "gps":JSON.stringify(currentLocation)};
+          socket.send(JSON.stringify(data));
+          // show game view
+          $('#front').hide();
+          $('#left').show();
+          $('#right').show();
+        });
+
+        // home page world create/join
+        $('#home-world-create').click(function() {
+          event.preventDefault();
+          //get the input name
+          var name = $('#home-input-name').val();
+          $('#home-input-name').val('');
+          // preparing new world data
+          var data = {"type":"create","world":name, "gps":JSON.stringify(currentLocation)};
           socket.send(JSON.stringify(data));
         });
 
-        var height = $(window).height();
+        $('#home-worldList').change(function() {
+          event.preventDefault();
+          //get the selected world name
+          var name = $('#home-worldList :selected').val();
+          // preparing to request world data
+          var data = {"type":"join","world":name, "gps":JSON.stringify(currentLocation)};
+          socket.send(JSON.stringify(data));
+
+          // show game view
+          $('#front').hide();
+          $('#left').show();
+          $('#right').show();
+        });
+
+        var height = $(window).height()-100;
         $("#world").css('height', height);
         $("#map-canvas").css('height', height/2);
 
@@ -186,6 +257,7 @@
         $("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
         $("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
         $("#world img").on("drag"     , function(event, ui) { logDrag(event, ui); });
+
       });
 		</script>
 	</head>
@@ -210,8 +282,8 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#">Playing</a></li>
-        <li><a href="#">Instructions</a></li>
+        <li class="active"><a href="#">Home</a></li>
+        <li><a href="#">Playing</a></li>
       </ul>
 
      
@@ -231,7 +303,31 @@
 </nav>
 	<div class="container">
 		<div class="row">
-			<div class="col-md-6" id="border">
+
+      <div class="col-md-12" id="front">
+      <div class="jumbotron">
+        <h1>Welcome to OXOX!</h1>
+        <p>Create or join a world to start a game!</p>
+        <div class="input-group" style="margin:1% auto;">
+          <input type="text" class="form-control" id="home-input-name">
+          <span class="input-group-btn">
+            <button class="btn btn-primary" type="button" id="home-world-create">Create</button>
+          </span>
+
+        </div>
+        Or
+        <div class="input-group" style="margin:1% auto;">
+          <select class="form-control" id = "home-worldList"> 
+            <option value="" disabled selected>Join a world</option>
+          </select>        
+        </div>
+      </div>
+      </div>
+
+
+			<div class="col-md-6" id="left" style="display:none;">
+        <h3>The world: <span id="world-name"></span></h3>
+        <hr>
 				<div id="world" style="z-index:3;">
 					<img id="x1" src="images/x.gif" style="z-index:2;" class="draggable" />
 					<img id="x2" src="images/x.gif" style="z-index:2;" class="draggable" />
@@ -246,12 +342,13 @@
 					<img id="tttboard" src="images/tictactoe.gif" style="z-index:1;" class="draggable" />
 				</div>
 			</div>
-      <div class="col-md-6">
-      <div>
-        Where are other players?
-      </div>
-      <div id="map-canvas">
-        
+      <div class="col-md-6" style="display:none;" id="right">
+      <div id="map">
+        <h3>Other players on this map</h3>
+        <hr>
+        <div id="map-canvas">
+          
+        </div>
       </div>
       </div>
 		</div>

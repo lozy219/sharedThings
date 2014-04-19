@@ -1,11 +1,46 @@
-.draggable { position: relative; float: left;} 
+@media (min-width: 0px) {
+	.input-group {
+		width:90%;
+	}
+}
+
+/* Medium devices (desktops, 992px and up) */
+@media (min-width: 750px) {
+	.input-group {
+		width:60%;
+	}
+}
+
+/* Large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+	.input-group {
+		width:40%;
+	}
+}
+
+
+.draggable { position: absolute;} 
 
 #world {
+	position: relative;
 	margin: 0 auto;
-	border: 1px red solid;
+	border: 1px red dashed;
 
 }
 
-.col-md-6 {
-	border: 5px red solid;
+#map-canvas {
+	border-radius: 10px;
 }
+
+#map {
+	text-align: center;
+}
+
+#front {
+	text-align: center;
+}
+
+h3 {
+	text-align: center;
+}
+
