@@ -22,6 +22,7 @@
 
     <link href="style.css" rel="stylesheet">
 		<script>
+    var worldname;
 			var world = {
               "x1":{"x":70,"y":112.5}, "x2":{"x":70,"y":112.5}, "x3":{"x":70,"y":112.5},
               "x4":{"x":70,"y":112.5}, "x5":{"x":70,"y":112.5}, "o1":{"x":70,"y":112.5},
@@ -38,7 +39,7 @@
         world[item].y = ui.position.top;
         
         // wrap the information for this move and send it to the server.
-        var data = {"type":"move", "id":item, "x":world[item].x, "y":world[item].y};
+        var data = {"type":"move", "world":worldname, "id":item, "x":world[item].x, "y":world[item].y};
         var positions = JSON.stringify(data);
 
         socket.send(positions);
@@ -73,6 +74,7 @@
 
       
       $(function() { 
+        //Map API
         if ("geolocation" in navigator) {
             // if the device support the geolocation
             navigator.geolocation.getCurrentPosition(function(position) {
@@ -85,6 +87,8 @@
           /* geolocation IS NOT available */
           alert("no");
         }
+
+        // Mobile features
         // shake to reset
         window.ondevicemotion = function(event) {
                 var ax = Math.round(event.acceleration.x);
@@ -108,36 +112,77 @@
         };
         
         socket.onmessage = function (event) {
-          var move = JSON.parse(event.data);
-
-
-          // if the data recieved is to initialize the game
-          if (move.type=="initial") {
-            console.log("initial!!!!!");
-            world = JSON.parse(move.data);
-
-            console.log(world);
-            // reset all the position
-            $("img").each(function() {
-              $(this).css("left",world[$(this).attr("id")].x);
-              $(this).css("top",world[$(this).attr("id")].y);
-            });
-          } else {
-          // the data is just to change a specific position of an item
-            world[move.id].x= move.x;
-            world[move.id].y = move.y;
-
-            // change the position of that item
-            $("#"+move.id).css("left",world[move.id].x);
-            $("#"+move.id).css("top",world[move.id].y);
+          var received = JSON.parse(event.data);
+          if (received.type=='list') {
+            var list = JSON.parse(received.data);
+            $('#worldList').html("<option disabled selected>Join a world</option>");
+            for (var i=0;i<list.length;i++)
+              $('#worldList').append('<option value = "'+list[i]+'">'+list[i]+'</option>');
           }
+          if (received.type=='success') {
+            worldname= received.world;
+            $('.draggable').show();
+            alert(received.data);
+          }
+          if (received.type=='error') {
+            alert(received.data);
+          }
+
+          if (received.world==worldname) {
+            // if the data received is to initialize the game
+            if (received.type=="initial") {
+              console.log("initial!!!!!");
+              world = JSON.parse(received.data);
+              // change current worldstate
+                  worldname = received.world;
+              // console.log(world);
+              $('#world-name').text(worldname);
+              // reset all the position
+              $("img").each(function() {
+                $(this).css("left",world[$(this).attr("id")].x);
+                $(this).css("top",world[$(this).attr("id")].y);
+              });
+            } 
+            if (received.type=="move") {
+            // the data is just to change a specific position of an item
+              world[received.id].x= received.x;
+              world[received.id].y = received.y;
+
+              // change the position of that item
+              $("#"+received.id).css("left",world[received.id].x);
+              $("#"+received.id).css("top",world[received.id].y);
+            }
+          }
+
+          
         };
+
+        // World
+        // creating a new world
+        $('#world-create').click(function() {
+          event.preventDefault();
+          //get the input name
+          var name = $('#input-name').val();
+          $('#input-name').val('');
+          // preparing new world data
+          var data = {"type":"create","world":name};
+              socket.send(JSON.stringify(data));
+        });
+
+        $('#worldList').change(function() {
+          event.preventDefault();
+          //get the selected world name
+          var name = $('#worldList :selected').val();
+          // preparing to request world data
+          var data = {"type":"join","world":name};
+          socket.send(JSON.stringify(data));
+        });
 
         var height = $(window).height();
         $("#world").css('height', height);
-        $("#map-canvas").css('height', height);
-        
-        $("#world img").draggable({ containment: $("#border") }); 
+        $("#map-canvas").css('height', height/2);
+
+        $("#world img").draggable({ containment: $("#world") }); 
         $("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
         $("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
         $("#world img").on("drag"     , function(event, ui) { logDrag(event, ui); });
@@ -167,17 +212,14 @@
       <ul class="nav navbar-nav">
         <li class="active"><a href="#">Playing</a></li>
         <li><a href="#">Instructions</a></li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Select a world<b class="caret"></b></a>
-          <ul class="dropdown-menu">
-            <li><a href="#" data-world='1'>Action</a></li>
-            <li><a href="#" data-world='2'>Another action</a></li>
-            <li><a href="#" data-world='3'>Something else here</a></li>
-            <li><a href="#" data-world='4'>One more separated link</a></li>
-          </ul>
-        </li>
       </ul>
+
+     
       <form class="navbar-form navbar-right">
+        <select class="form-control" id = "worldList"> 
+          <option value="" disabled selected>Join a world</option>
+        </select>
+        <span style="color:white;">Or</span>
         <div class="form-group">
           <input type="text" class="form-control" id="input-name" placeholder="Create a world">
         </div>
@@ -205,6 +247,9 @@
 				</div>
 			</div>
       <div class="col-md-6">
+      <div>
+        Where are other players?
+      </div>
       <div id="map-canvas">
         
       </div>
