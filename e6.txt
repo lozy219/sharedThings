@@ -6,4 +6,6 @@
 
 4. The Os and Xs are overlapping, players need to move out the Os otherwise they cannot touch Xs.
 
-5. As this is a traditional interactive game which should more or less follow the intuition: the tttboard should not be draggable, and player should only be allowed to move one kind of sign (either O or X).
+5. If two guys are dragging on the same thing, something strange happens.
+
+6. Fixed position has a problem: if the window is resized, elements will be out of bound.

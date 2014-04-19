@@ -65,7 +65,8 @@
 						console.log(event.data);
 						$("img").each(function(){
 						    $(this).css("left", world[$(this).attr("id")]["x"]);
-						    $(this).css("top", world[$(this).attr("id")]["y"]);
+						    var height = $("#world").position().top;
+						    $(this).css("top", world[$(this).attr("id")]["y"]+ parseInt(height));
 						});
 					}
 				}
@@ -78,10 +79,32 @@
 				});
 
 				$(".draggable").draggable({ containment: "parent" });
+
+				$(window).resize(function() {
+				    $("img").each(function(){
+					    $(this).css("left", world[$(this).attr("id")]["x"]);
+					    var height = $("#world").position().top;
+					    $(this).css("top", world[$(this).attr("id")]["y"]+ parseInt(height));
+					});
+				});
 				});
 		</script>
 	</head>
 	<body>
+		<div id="option">
+			<form>
+				<label>Create a new world</label>
+				<input type="text" name="name" id='input-name'>
+				<input type="submit" id="world-create" value="Create">
+				<label>Or select from existing world</label>
+				<select id = "worldList">
+             	</select>
+             	<input type="submit" id="world-join" value="Go">
+			</form>
+			<div>
+				Current world: <span id="world-name"></span>
+			</div>
+		</div>
 		<div id="world" style="border : 1px red solid">
 			<img id="x1" src="images/x.gif" style="z-index:2;" class="draggable" />
 			<img id="x2" src="images/x.gif" style="z-index:2;" class="draggable" />
