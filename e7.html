@@ -26,21 +26,24 @@
 			function logDrag(event, ui){
 				//console.log(JSON.stringify(ui.position) + " " + event.target.id);
 				// world[event.target.id]["x"] = ui.position.left;
-				// world[event.target.id]["y"] = ui.position.top; 	
-				var data = {"mode" : 'update',
-							"id"   : event.target.id,
-							"pack" : {"x" : ui.position.left,
-									  "y" : ui.position.top}};
-				socket.send(JSON.stringify(data)); 
+				// world[event.target.id]["y"] = ui.position.top; 
+				if (event.target.id !== "tttboard") {	
+					var data = {"mode" : 'update',
+								"id"   : event.target.id,
+								"pack" : {"x" : ui.position.left,
+										  "y" : ui.position.top}};
+					socket.send(JSON.stringify(data)); 
+				}
 			}
+
 			
 			$(function(){
 				socket = new WebSocket("ws://localhost:"+port);
-		 
 				$("#world img").draggable(); 
 				$("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
 				$("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
 				$("#world img").on("drag"     , function(event, ui) { logDrag(event, ui); });
+				$("#tttboard").draggable({disabled : true});
 
 				socket.onopen = function (event) {
   					// socket.send("Here's some text that the server is urgently awaiting!"); 
@@ -53,17 +56,33 @@
 				};
 				socket.onmessage = function (event) {
 					console.log(event.data);
-					world = JSON.parse(event.data);
-					$("img").each(function(){
-					    $(this).css("left", world[$(this).attr("id")]["x"]);
-					    $(this).css("top", world[$(this).attr("id")]["y"]);
-					});
+					var mes = JSON.parse(event.data);
+					if (mes["mode"] != 'init') {
+						world[mes["id"]]["x"] = mes["pack"]["x"];
+						world[mes["id"]]["y"] = mes["pack"]["y"];
+					} else if (mes["mode"] == 'init'){
+						world = JSON.parse(event.data)['world'];
+						console.log(event.data);
+						$("img").each(function(){
+						    $(this).css("left", world[$(this).attr("id")]["x"]);
+						    $(this).css("top", world[$(this).attr("id")]["y"]);
+						});
+					}
 				}
-			});
+
+				var height = $(window).height();
+				$("#world").css('height', height);
+
+				$(window).resize(function() {
+					$("#world").css('height',  $(window).height());
+				});
+
+				$(".draggable").draggable({ containment: "parent" });
+				});
 		</script>
 	</head>
 	<body>
-		<div id="world">
+		<div id="world" style="border : 1px red solid">
 			<img id="x1" src="images/x.gif" style="z-index:2;" class="draggable" />
 			<img id="x2" src="images/x.gif" style="z-index:2;" class="draggable" />
 			<img id="x3" src="images/x.gif" style="z-index:2;" class="draggable" />
@@ -73,8 +92,8 @@
 			<img id="o2" src="images/o.gif" style="z-index:2;" class="draggable" />
 			<img id="o3" src="images/o.gif" style="z-index:2;" class="draggable" />
 			<img id="o4" src="images/o.gif" style="z-index:2;" class="draggable" />
-			<img id="o5" src="images/o.gif" style="z-index:2;" /class="draggable" >
-			<img id="tttboard" src="images/tictactoe.gif" style="z-index:1;" class="draggable" />
+			<img id="o5" src="images/o.gif" style="z-index:2;" class="draggable" >
+			<img id="tttboard" src="images/tictactoe.gif" style="z-index:1;" class="draggable"/>
 		</div>
 	</body>
 </html>

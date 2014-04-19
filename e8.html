@@ -141,7 +141,7 @@
 				  $("#world").css('height',  $(window).height());
 				});
 				// $("#world img").draggable(); 
-				$( ".draggable" ).draggable({ containment: "parent" });
+				$(".draggable").draggable({ containment: "parent" });
 				$("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
 				$("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
 				$("#world img").on("drag"     , function(event, ui) { logDrag(event, ui); });
@@ -174,7 +174,7 @@
 			<img id="o2" src="images/o.gif" style="z-index:2;" class="draggable" />
 			<img id="o3" src="images/o.gif" style="z-index:2;" class="draggable" />
 			<img id="o4" src="images/o.gif" style="z-index:2;" class="draggable" />
-			<img id="o5" src="images/o.gif" style="z-index:2;" /class="draggable" >
+			<img id="o5" src="images/o.gif" style="z-index:2;" class="draggable" >
 			<img id="tttboard" src="images/tictactoe.gif" style="z-index:1;" class="draggable" />
 		</div>
 	</body>

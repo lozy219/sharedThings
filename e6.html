@@ -48,7 +48,11 @@
 				};
 				socket.onmessage = function (event) {
 					console.log(event.data);
-					world = JSON.parse(event.data);
+					world = JSON.parse(event.data)['world'];
+					$("img").each(function(){
+					    $(this).css("left", world[$(this).attr("id")]["x"]);
+					    $(this).css("top", world[$(this).attr("id")]["y"]);
+					});
 				}
 			});
 		</script>

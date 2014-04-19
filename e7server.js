@@ -22,11 +22,18 @@ wss.on('connection', function(ws) {
 		console.log('received: %s', message);
 		var mes = JSON.parse(message);
 		if (mes["mode"] != 'init') {
-			world[mes["id"]]["x"] = mes["pack"]["x"];
-			world[mes["id"]]["y"] = mes["pack"]["y"];
+			if (mes["id"] != 'tttboard'){
+				world[mes["id"]]["x"] = mes["pack"]["x"];
+				world[mes["id"]]["y"] = mes["pack"]["y"];
+				console.log('current world: %s', JSON.stringify(world));
+				wss.broadcast(message);
+			}
+		} else if (mes["mode"] == 'init') {
+			var initMes = {"mode" : 'init',
+						   "world": world};
+			wss.broadcast(JSON.stringify(initMes));
 		}
-		console.log('current world: %s', JSON.stringify(world));
-		wss.broadcast(JSON.stringify(world));
+
 		if(message=="delay"){
 			console.log('delaying');
 			while(1);
