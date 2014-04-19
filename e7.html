@@ -18,10 +18,7 @@
 		<script src="config.js" ></script>
 		<script>
 			var socket;
-			var world = {"x1":{"x":8,"y":8}, "x2":{"x":8,"y":51}, "x3":{"x":8,"y":94},
-						 "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":290,"y":8},
-						 "o2":{"x":290,"y":51}, "o3":{"x":290,"y":94}, "o4":{"x":290,"y":137},
-						 "o5":{"x":290,"y":180},"tttboard":{"x":70,"y":30}};
+			var world = {"x1":{"x":8,"y":38}, "x2":{"x":8,"y":81}, "x3":{"x":8,"y":124},"x4":{"x":8,"y":167}, "x5":{"x":8,"y":210}, "o1":{"x":290,"y":38},"o2":{"x":290,"y":81}, "o3":{"x":290,"y":124}, "o4":{"x":290,"y":167},"o5":{"x":290,"y":210},"tttboard":{"x":70,"y":60}};
 
 			function logDrag(event, ui){
 				//console.log(JSON.stringify(ui.position) + " " + event.target.id);
@@ -60,13 +57,11 @@
 					if (mes["mode"] != 'init') {
 						world[mes["id"]]["x"] = mes["pack"]["x"];
 						world[mes["id"]]["y"] = mes["pack"]["y"];
-					} else if (mes["mode"] == 'init'){
+					} else if (mes["mode"] == 'init') {
 						world = JSON.parse(event.data)['world'];
-						console.log(event.data);
 						$("img").each(function(){
-						    $(this).css("left", world[$(this).attr("id")]["x"]);
-						    var height = $("#world").position().top;
-						    $(this).css("top", world[$(this).attr("id")]["y"]+ parseInt(height));
+							$(this).css("left", world[$(this).attr("id")]["x"]);
+							$(this).css("top", world[$(this).attr("id")]["y"]);
 						});
 					}
 				}
@@ -81,11 +76,104 @@
 				$(".draggable").draggable({ containment: "parent" });
 
 				$(window).resize(function() {
-				    $("img").each(function(){
-					    $(this).css("left", world[$(this).attr("id")]["x"]);
-					    var height = $("#world").position().top;
-					    $(this).css("top", world[$(this).attr("id")]["y"]+ parseInt(height));
-					});
+				   	$("img").each(function(){
+							var top = parseInt($("#world").position().top);
+						    var bottom = top + parseInt($("#world").height());
+						    var left = parseInt($("#world").position().left);
+						    var right = left + parseInt($("#world").width());
+						    var height = parseInt($(this).height());
+						    var width = parseInt($(this).width());
+						    if (world[$(this).attr("id")]["x"] <= left) {
+						    	if (world[$(this).attr("id")]["y"] <= top) {
+						    		var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : left,
+										  				  "y" : top}};
+									socket.send(JSON.stringify(data));
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} else if (world[$(this).attr("id")]["y"]+height >= bottom) {
+									var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : left,
+										  				  "y" : bottom - height}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} else {
+									var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : left,
+										  				  "y" : world[$(this).attr("id")]["y"]}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								}
+							} else if (world[$(this).attr("id")]["x"] + width >= right) {
+								if (world[$(this).attr("id")]["y"] <= top) {
+						    		var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : right - width,
+										  				  "y" : top}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} else if (world[$(this).attr("id")]["y"]+height >= bottom) {
+									var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : right - width,
+										  				  "y" : bottom - height}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} else {
+									var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : right - width,
+										  				  "y" : world[$(this).attr("id")]["y"]}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} 
+							} else {
+								if (world[$(this).attr("id")]["y"] <= top) {
+						    		var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : world[$(this).attr("id")]["x"],
+										  				  "y" : top}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} else if (world[$(this).attr("id")]["y"]+height >= bottom) {
+									var data = {"mode" : 'change',
+												"id"   : $(this).attr("id"),
+												"pack" : {"x" : world[$(this).attr("id")]["x"],
+										  				  "y" : bottom - height}};
+									socket.send(JSON.stringify(data)); 
+									world[data["id"]]["x"] = data["pack"]["x"];
+									world[data["id"]]["y"] = data["pack"]["y"];
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} else {
+									$(this).css("left", world[$(this).attr("id")]["x"]);
+						    		$(this).css("top", world[$(this).attr("id")]["y"]);
+								} 
+							}
+						});
 				});
 				});
 		</script>
