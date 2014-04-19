@@ -1,1 +1,9 @@
-different frontend will play on the same server
+1. Sending the whole world as the message, which will be quite inefficient and increase the network load.
+
+2. When a new player join the game, the placement of the elements (O, X, and the board) will be located at the original position. If someone has already started the game and they actually have play a bit, the new player will destroy the current game state.
+
+3. The tic-tac-toe board can be moved out of the window, which will make it impossible to drag it back.
+
+4. The Os and Xs are overlapping, players need to move out the Os otherwise they cannot touch Xs.
+
+5. As this is a traditional interactive game which should more or less follow the intuition: the tttboard should not be draggable, and player should only be allowed to move one kind of sign (either O or X).
