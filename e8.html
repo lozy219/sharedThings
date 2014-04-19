@@ -1,0 +1,181 @@
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+  		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<title>Shared Things</title>
+		<link href="style.css" rel="stylesheet">
+		<!-- <link href="jquery-ui-1.10.4.custom/css/smoothness/jquery-ui-1.10.4.custom.css" rel="stylesheet"> ignore jquery ui styles, eventually we will use bootstrap styles -->
+		<script src="config.js" ></script>
+        <script src="bootstrap/js/jquery.min.js"></script> <!-- version of jquery for bootstrap -->
+        <script src="jquery-ui-1.10.4.custom/js/jquery-ui-1.10.4.custom.js"></script> <!-- enough of jquery ui for dragging, no more -->
+        <script src="jquery.ui.touch-punch/jquery.ui.touch-punch.min.js"></script> <!-- http://touchpunch.furf.com/ -->
+		<script src="config.js" ></script>
+		<script>
+			var worldname = "new";
+			var world = {
+              "x1":{"x":70,"y":112.5}, "x2":{"x":70,"y":112.5}, "x3":{"x":70,"y":112.5},
+              "x4":{"x":70,"y":112.5}, "x5":{"x":70,"y":112.5}, "o1":{"x":70,"y":112.5},
+              "o2":{"x":70,"y":112.5}, "o3":{"x":70,"y":112.5}, "o4":{"x":70,"y":112.5},
+              "o5":{"x":70,"y":112.5}, "tttboard":{"x":70,"y":112.5}
+            };
+
+			function logDrag(event, ui){
+				// get the current target from the world state
+				var item =  event.target.id;
+
+				//update current item's position in the world state
+				world[item].x = ui.position.left;
+				world[item].y = ui.position.top;
+				
+				// wrap the information for this move and send it to the server.
+				var data = {"type":"move", "world":worldname, "id":item, "x":world[item].x, "y":world[item].y};
+				var positions = JSON.stringify(data);
+
+				socket.send(positions);
+
+			}
+
+			
+			$(function() { 
+				$('.draggable').hide();
+				window.ondevicemotion = function(event) {
+	       				var ax = Math.round(event.acceleration.x);
+	       				var ay = Math.round(event.acceleration.y);
+	       				var az = Math.round(event.acceleration.z);
+
+	       				// if shake detected, reset the world
+	       				var data = {"type":"reset", "world":worldname};
+	       				if (Math.abs(ax)>50 || Math.abs(ay)>50 || Math.abs(az)>50) {
+	       					socket.send(JSON.stringify(data));
+	       				}
+       			};
+
+				socket = new WebSocket("ws://localhost:"+port);
+				socket.onopen = function (event) {
+					console.log("connected");
+				};
+
+				socket.onclose = function (event) {
+					console.log("closed code:" + event.code + " reason:" +event.reason + " wasClean:"+event.wasClean);
+				};
+				
+				socket.onmessage = function (event) {
+					var received = JSON.parse(event.data);
+					if (received.type=='list') {
+						var list = JSON.parse(received.data);
+						$('#worldList').html('');
+						for (var i=0;i<list.length;i++)
+							$('#worldList').append('<option value = "'+list[i]+'">'+list[i]+'</option>');
+					}
+					if (received.type=='success') {
+						worldname= received.world;
+						$('.draggable').show();
+						alert(received.data);
+					}
+					if (received.type=='error') {
+						alert(received.data);
+					}
+
+					if (received.world==worldname) {
+						// if the data received is to initialize the game
+						if (received.type=="initial") {
+							console.log("initial!!!!!");
+							world = JSON.parse(received.data);
+							// change current worldstate
+	       					worldname = received.world;
+							// console.log(world);
+							$('#world-name').text(worldname);
+							// reset all the position
+	 						$("img").each(function() {
+								$(this).css("left",world[$(this).attr("id")].x);
+								$(this).css("top",world[$(this).attr("id")].y);
+							});
+						} 
+						if (received.type=="move") {
+						// the data is just to change a specific position of an item
+							world[received.id].x= received.x;
+							world[received.id].y = received.y;
+
+							// change the position of that item
+							$("#"+received.id).css("left",world[received.id].x);
+							$("#"+received.id).css("top",world[received.id].y);
+						}
+					}
+
+					
+				};
+
+				// World
+				// creating a new world
+				$('#world-create').click(function() {
+					event.preventDefault();
+					//get the input name
+					var name = $('#input-name').val();
+					$('#input-name').val('');
+					// preparing new world data
+					var data = {"type":"create","world":name};
+	       			socket.send(JSON.stringify(data));
+				});
+
+				$('#world-join').click(function() {
+					event.preventDefault();
+					//get the selected world name
+					var name = $('#worldList :selected').val();
+					// preparing to request world data
+					var data = {"type":"join","world":name};
+	       			socket.send(JSON.stringify(data));
+	       			// change current worldstate
+	       			// worldname = name;
+				});
+
+
+
+				var height = $(window).height();
+				$("#world").css('height', height);
+
+				$(window).resize(function() {
+				  $("#world").css('height',  $(window).height());
+				});
+				// $("#world img").draggable(); 
+				$( ".draggable" ).draggable({ containment: "parent" });
+				$("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
+				$("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
+				$("#world img").on("drag"     , function(event, ui) { logDrag(event, ui); });
+
+			});
+		</script>
+	</head>
+	<body>
+		<div id="option">
+			<form>
+				<label>Create a new world</label>
+				<input type="text" name="name" id='input-name'>
+				<input type="submit" id="world-create" value="Create">
+				<label>Or select from existing world</label>
+				<select id = "worldList">
+             	</select>
+             	<input type="submit" id="world-join" value="Go">
+			</form>
+			<div>
+				Current world: <span id="world-name"></span>
+			</div>
+		</div>
+		<div id="world">
+			<img id="x1" src="images/x.gif" style="z-index:2;" class="draggable" />
+			<img id="x2" src="images/x.gif" style="z-index:2;" class="draggable" />
+			<img id="x3" src="images/x.gif" style="z-index:2;" class="draggable" />
+			<img id="x4" src="images/x.gif" style="z-index:2;" class="draggable" />
+			<img id="x5" src="images/x.gif" style="z-index:2;" class="draggable" />
+			<img id="o1" src="images/o.gif" style="z-index:2;" class="draggable" />
+			<img id="o2" src="images/o.gif" style="z-index:2;" class="draggable" />
+			<img id="o3" src="images/o.gif" style="z-index:2;" class="draggable" />
+			<img id="o4" src="images/o.gif" style="z-index:2;" class="draggable" />
+			<img id="o5" src="images/o.gif" style="z-index:2;" /class="draggable" >
+			<img id="tttboard" src="images/tictactoe.gif" style="z-index:1;" class="draggable" />
+		</div>
+	</body>
+</html>
