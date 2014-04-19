@@ -1,0 +1,11 @@
+.draggable { position: relative; float: left;} 
+
+#world {
+	margin: 0 auto;
+	border: 1px red solid;
+
+}
+
+.col-md-6 {
+	border: 1px red solid;
+}
