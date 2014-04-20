@@ -1,2 +1,5 @@
 1. when a new page is loaed, the position is updated
-2. better replacement of elements, easy for user to drag
+2. better placement of elements, easy for user to drag
+3. seding the changed state instead of the whole world between server and client, reduce the network flow
+4. when resizing a window, the system will detect wheter the elements have exceed the border or not.
+5. add the frame to the container, so user will no be able to move things outside the box.
