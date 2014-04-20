@@ -39,8 +39,15 @@
 #front {
 	text-align: center;
 }
-
+#btn-reset {
+	margin: 10px auto;
+	padding: 2px auto;
+}
+#left {
+	text-align: center;
+}
 h3 {
 	text-align: center;
+	word-wrap:break-word;
 }
 

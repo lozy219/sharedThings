@@ -2,7 +2,7 @@
 
 2. When a new player join the game, the placement of the elements (O, X, and the board) will be located at the original position. If someone has already started the game and they actually have play a bit, the new player will destroy the current game state.
 
-3. The tic-tac-toe board can be moved out of the window, which will make it impossible to drag it back.
+3. The tic-tac-toe board can be moved out of the window, which will make it diffcult to drag it back.
 
 4. The Os and Xs are overlapping, players need to move out the Os otherwise they cannot touch Xs.
 

@@ -18,15 +18,17 @@
     </script>
 		<!-- Bootstrap -->
 		<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+   <link rel="shortcut icon" href="/favicon.ico" type="image/icon"> 
+   <link rel="icon" href="/favicon.ico" type="image/icon">
 		<!-- Include all compiled plugins (below), or include individual files as needed -->
 
     <link href="style.css" rel="stylesheet">
 		<script>
     var worldname='';
 			var world = {"x1":{"x":8,"y":8}, "x2":{"x":8,"y":51}, "x3":{"x":8,"y":94},
-             "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":260,"y":8},
-             "o2":{"x":260,"y":51}, "o3":{"x":260,"y":94}, "o4":{"x":260,"y":137},
-             "o5":{"x":260,"y":180},"tttboard":{"x":70,"y":30}};
+             "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":240,"y":8},
+             "o2":{"x":240,"y":51}, "o3":{"x":240,"y":94}, "o4":{"x":240,"y":137},
+             "o5":{"x":240,"y":180},"tttboard":{"x":60,"y":30}};
 
       function logDrag(event, ui){
         // get the current target from the world state
@@ -73,7 +75,7 @@
       function displayPlayer(clients) {
           // for all the users in this map, display then as a marker
           for (var i=0;i<clients.length;i++) {
-            console.log(clients[i]);
+            console.log(JSON.stringify(clients[i]));
             var marker = new google.maps.Marker({
                 position:clients[i],
                 title:"Player",
@@ -123,7 +125,7 @@
           }       
         };
 
-        socket = new WebSocket("ws://128.199.215.175:"+port);
+        socket = new WebSocket("ws://cp3101b-1.comp.nus.edu.sg:"+port);
         socket.onopen = function (event) {
           console.log("connected");
         };
@@ -188,11 +190,10 @@
               $("#"+received.id).css("top",world[received.id].y);
             }
             if (received.type=="geo") {
-                console.log('GEO: '+received.data);
+                console.log('GEO: '+ received.data);
                 // display the player using received data
                 displayPlayer(JSON.parse(received.data));
-
-          } 
+            } 
             
           }
 
@@ -204,7 +205,7 @@
         $('#world-create').click(function() {
           event.preventDefault();
           //get the input name
-          var name = $('#input-name').val();
+          var name = encodeURI($('#input-name').val());
           $('#input-name').val('');
           // preparing new world data
           var data = {"type":"create","world":name,"gps":JSON.stringify(currentLocation)};
@@ -222,13 +223,16 @@
           $('#front').hide();
           $('#left').show();
           $('#right').show();
+           // menu add class playing
+          $('#nav-home').removeClass("active");
+          $('#nav-play').addClass("active");
         });
 
         // home page world create/join
         $('#home-world-create').click(function() {
           event.preventDefault();
           //get the input name
-          var name = $('#home-input-name').val();
+          var name = encodeURI($('#home-input-name').val());
           $('#home-input-name').val('');
           // preparing new world data
           var data = {"type":"create","world":name, "gps":JSON.stringify(currentLocation)};
@@ -247,6 +251,9 @@
           $('#front').hide();
           $('#left').show();
           $('#right').show();
+          // menu add class playing
+          $('#nav-home').removeClass("active");
+          $('#nav-play').addClass("active");
         });
 
         var height = $(window).height()-100;
@@ -282,8 +289,8 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#">Home</a></li>
-        <li><a href="#">Playing</a></li>
+        <li class="active" id="nav-home"><a href="#">Home</a></li>
+        <li id="nav-play"><a href="#">Playing</a></li>
       </ul>
 
      
@@ -327,7 +334,10 @@
 
 			<div class="col-md-6" id="left" style="display:none;">
         <h3>The world: <span id="world-name"></span></h3>
+
         <hr>
+        <button class="btn btn-primary" type="button" id="btn-reset">Reset the world</button>
+        <p>Mobile device could shake to reset the world</p>
 				<div id="world" style="z-index:3;">
 					<img id="x1" src="images/x.gif" style="z-index:2;" class="draggable" />
 					<img id="x2" src="images/x.gif" style="z-index:2;" class="draggable" />
@@ -344,7 +354,7 @@
 			</div>
       <div class="col-md-6" style="display:none;" id="right">
       <div id="map">
-        <h3>Other players on this map</h3>
+        <h3>Player location in history</h3>
         <hr>
         <div id="map-canvas">
           

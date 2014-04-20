@@ -5,9 +5,9 @@ var config = require('./config_node.js');
 var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: config.port});
 function NewWord() {
 	this.world = {"x1":{"x":8,"y":8}, "x2":{"x":8,"y":51}, "x3":{"x":8,"y":94},
-             "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":260,"y":8},
-             "o2":{"x":260,"y":51}, "o3":{"x":260,"y":94}, "o4":{"x":260,"y":137},
-             "o5":{"x":260,"y":180},"tttboard":{"x":70,"y":30}};
+             "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":240,"y":8},
+             "o2":{"x":240,"y":51}, "o3":{"x":240,"y":94}, "o4":{"x":240,"y":137},
+             "o5":{"x":240,"y":180},"tttboard":{"x":60,"y":30}};
 }
 
 var server_world = {};
@@ -38,7 +38,7 @@ wss.on('connection', function(ws) {
 		var changed = JSON.parse(message);
 
 		if (changed.type == "move") {
-			console.log(changed);
+			// console.log(changed);
 			// change the data stored on the server
 			var state = server_world[changed.world];
 			state[changed.id].x=changed.x;
@@ -51,7 +51,7 @@ wss.on('connection', function(ws) {
 		// if get the reset order, reset and broadcast the initial world
 		if (changed.type == "reset") {
 			// create a new world
-			console.log(changed.world);
+			// console.log(changed.world);
 			var newWorld = new NewWord();
 			server_world[changed.world] = newWorld.world;
 
@@ -67,12 +67,10 @@ wss.on('connection', function(ws) {
 
 				// get newly connected user's location information
 				var geoLocation = JSON.parse(changed.gps);
+				world_location[changed.world] =[];
 				if (geoLocation.lat!=undefined && geoLocation.lng!=undefined) {
 					// store the location information
-					world_location[changed.world] =[];
 					world_location[changed.world].push(geoLocation);
-
-					
 				}
 				// update the world list data		
 				serverNameList.push(changed.world);
@@ -93,14 +91,18 @@ wss.on('connection', function(ws) {
 
 		if (changed.type == "join") {
 			// a user want to join a existing world
-			console.log(JSON.stringify(changed));
+			// console.log(JSON.stringify(changed));
 			// first pull out the world data
 			var data = server_world[changed.world];
 			// get newly connected user's location information
 			var geoLocation = JSON.parse(changed.gps);
+
 			if (geoLocation.lat!=undefined && geoLocation.lng!=undefined) {
+				var temp = [];
+				temp.push(geoLocation);
+				// console.log(temp);
 				// keep other users update
-				wss.broadcast(JSON.stringify({type:"geo", world:changed.world, data:[changed.gps]}));
+				wss.broadcast(JSON.stringify({type:"geo", world:changed.world, data:JSON.stringify(temp)}));
 			}
 			
 			// send a success message
