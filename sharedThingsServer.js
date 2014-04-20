@@ -16,6 +16,8 @@ var world_location = {};
 
 var serverNameList=[];
 
+var player_position={};
+
 wss.on('close', function() {
     console.log('disconnected');
 });

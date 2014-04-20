@@ -251,6 +251,7 @@
             $('#front').hide();
             $('#left').show();
             $('#right').show();
+            $('#right-bottom').show();
             $('#nav-home').removeClass("active");
             $('#nav-play').addClass("active");
             // create success, initialize the map using self-location
@@ -335,6 +336,7 @@
           $('#front').hide();
           $('#left').show();
           $('#right').show();
+          $('#right-bottom').show();
            // menu add class playing
           $('#nav-home').removeClass("active");
           $('#nav-play').addClass("active");
@@ -378,6 +380,7 @@
           $('#front').hide();
           $('#left').show();
           $('#right').show();
+          $('#right-bottom').show();
           // menu add class playing
           $('#nav-home').removeClass("active");
           $('#nav-play').addClass("active");
@@ -387,6 +390,7 @@
           $('#front').show();
           $('#left').hide();
           $('#right').hide();
+          $('#right-bottom').hide();
         });
 
 
@@ -426,18 +430,6 @@
         <li class="active" id="nav-home"><a href="#">Home</a></li>
         <li id="nav-play"><a href="#">Playing</a></li>
       </ul>
-
-     
-      <form class="navbar-form navbar-right">
-        <select class="form-control" id = "worldList"> 
-          <option value="" disabled selected>Join a world</option>
-        </select>
-        <span style="color:white;">Or</span>
-        <div class="form-group">
-          <input type="text" class="form-control" id="input-name" placeholder="Create a world">
-        </div>
-        <button type="submit" id="world-create" class="btn btn-default">Create</button>
-      </form>
 
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
