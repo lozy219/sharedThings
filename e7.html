@@ -34,8 +34,8 @@
 			}
 
 			
-			$(function(){
-				socket = new WebSocket("ws://localhost:"+port);
+			$(function() {
+				socket = new WebSocket("ws://128.199.215.175:"+port);
 				$("#world img").draggable(); 
 				$("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
 				$("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
@@ -57,6 +57,10 @@
 					if (mes["mode"] != 'init') {
 						world[mes["id"]]["x"] = mes["pack"]["x"];
 						world[mes["id"]]["y"] = mes["pack"]["y"];
+						$("img").each(function(){
+							$(this).css("left", world[$(this).attr("id")]["x"]);
+							$(this).css("top", world[$(this).attr("id")]["y"]);
+						});
 					} else if (mes["mode"] == 'init') {
 						world = JSON.parse(event.data)['world'];
 						$("img").each(function(){
@@ -76,7 +80,7 @@
 				$(".draggable").draggable({ containment: "parent" });
 
 				$(window).resize(function() {
-				   	$("img").each(function(){
+				   		$("img").each(function() {
 							var top = parseInt($("#world").position().top);
 						    var bottom = top + parseInt($("#world").height());
 						    var left = parseInt($("#world").position().left);
@@ -175,7 +179,7 @@
 							}
 						});
 				});
-				});
+		});
 		</script>
 	</head>
 	<body>
