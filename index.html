@@ -23,12 +23,19 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
 
     <link href="style.css" rel="stylesheet">
-    <script>
-    var worldname='';
-      var world = {"x1":{"x":8,"y":8}, "x2":{"x":8,"y":51}, "x3":{"x":8,"y":94},
+
+		<script>
+    var worldname = '';
+    var selfposition = {};
+    var player_position = {};
+    //var max = -1;
+    var userid = Math.random()+"";
+
+			var world = {"x1":{"x":8,"y":8}, "x2":{"x":8,"y":51}, "x3":{"x":8,"y":94},
              "x4":{"x":8,"y":137}, "x5":{"x":8,"y":180}, "o1":{"x":240,"y":8},
              "o2":{"x":240,"y":51}, "o3":{"x":240,"y":94}, "o4":{"x":240,"y":137},
              "o5":{"x":240,"y":180},"tttboard":{"x":30,"y":30}};
+
 
       function logDrag(event, ui){
         // get the current target from the world state
@@ -48,6 +55,69 @@
 
       var currentLocation ={};
       var map;
+
+      
+
+      function setLocation() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(setPosition);
+          } else {
+            var x=document.getElementById("ll");
+            x.innerHTML="Geolocation is not supported by this browser.";
+          }
+      }
+
+      function setPosition(position){
+        selfposition["y"] = parseFloat(position.coords.latitude);  
+        selfposition["x"] = parseFloat(position.coords.longitude);  
+      }
+
+      function drawRadar() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+          } else {
+            var x=document.getElementById("lll");
+            x.innerHTML="Geolocation is not supported by this browser.";
+          }
+      }
+
+      function showPosition(position){
+        drawCircle();
+      }
+
+      function drawCircle() {
+        var c=document.getElementById("radar");
+        var cxt=c.getContext("2d");
+        var key;
+        cxt.fillStyle="#FFFF00";
+        cxt.clearRect(0, 0, c.width, c.height);
+
+        cxt.beginPath();
+        cxt.arc(200, 200,5,0,Math.PI*2,true);
+        cxt.closePath();
+        cxt.fill();
+        cxt.fillStyle="#FF0000";
+        var num = player_position.length;
+        var d=document.getElementById("online");
+        d.innerHTML = "Currently online : " + num;
+        for (key in player_position) {
+          if (player_position[key]["userid"] != userid) {
+            var x = parseFloat(player_position[key]["position"]["x"]);
+            var y = parseFloat(player_position[key]["position"]["y"]);
+            cxt.beginPath();
+            // max = Math.max(max, x - selfposition["x"], y - selfposition["y"]);
+            // console.log(max);
+            // if (max == 0) {
+            //   max = 0.0000000001;
+            // }
+            cxt.arc((x - selfposition["x"]) / 0.00002 * 20 + 200,
+                    (y - selfposition["y"]) / 0.00002 * 20 + 200,5,0,Math.PI*2,true);
+            cxt.closePath();
+            cxt.fill();
+          }
+        }
+      }
+
 
       function initialize() {
         var mapOptions = {
@@ -84,10 +154,21 @@
           }
       }
 
+      function refreshRadar() {
+        var datum = {"type":"getPos", "world":worldname, "newPos":JSON.stringify(selfposition), "userid" : userid};
+        socket.send(JSON.stringify(datum));
+      }
+
+      function radar() {
+        setLocation();
+        drawRadar();
+      }
+
       // a table stored 
       var players = {};
 
       $(function() { 
+        setLocation();
         //Map API
         if ("geolocation" in navigator) {
             // if the device support the geolocation
@@ -125,8 +206,12 @@
           }       
         };
 
-        socket = new WebSocket("ws://localhost:"+port);
+
+        socket = new WebSocket("ws://cp3101b-1.comp.nus.edu.sg:"+port);
         socket.onopen = function (event) {
+          setInterval(setLocation,500);
+          setInterval(refreshRadar,500);
+          setInterval(radar,500);
           console.log("connected");
         };
 
@@ -137,6 +222,17 @@
         
         socket.onmessage = function (event) {
           var received = JSON.parse(event.data);
+
+          console.log(received);
+          if (received.type=='pos') {
+            if (received.world == worldname) {
+              var x = JSON.parse(received.allposition);
+              if (x != undefined) {
+                player_position = x;
+              }
+            }
+          }
+
           if (received.type=='list') {
             var list = JSON.parse(received.data);
             
@@ -208,9 +304,16 @@
           //get the input name
           var name = encodeURI($('#input-name').val());
           $('#input-name').val('');
+
+          setLocation();
           // preparing new world data
-          var data = {"type":"create","world":name,"gps":JSON.stringify(currentLocation)};
-              socket.send(JSON.stringify(data));
+          var pack = {"pos" : JSON.stringify(selfposition),
+                      "userid" : userid};
+          var data = {"type":"create",
+                      "world":name,
+                      "gps":JSON.stringify(currentLocation),
+                      "pack": pack};
+          socket.send(JSON.stringify(data));
         });
 
         $('#worldList').change(function() {
@@ -218,7 +321,15 @@
           //get the selected world name
           var name = $('#worldList :selected').val();
           // preparing to request world data
-          var data = {"type":"join","world":name, "gps":JSON.stringify(currentLocation)};
+
+          setLocation();
+          var pack = JSON.stringify({"pos" : JSON.stringify(selfposition),
+                      "userid" : userid});
+          var data = {"type":"join",
+                      "world":name,
+                      "gps":JSON.stringify(currentLocation),
+                      "pack": pack};
+
           socket.send(JSON.stringify(data));
           // show game view
           $('#front').hide();
@@ -235,8 +346,16 @@
           //get the input name
           var name = encodeURI($('#home-input-name').val());
           $('#home-input-name').val('');
+
+          setLocation();
           // preparing new world data
-          var data = {"type":"create","world":name, "gps":JSON.stringify(currentLocation)};
+          var pack = {"pos" : JSON.stringify(selfposition),
+                      "userid" : userid};
+          var data = {"type":"create",
+                      "world":name,
+                      "gps":JSON.stringify(currentLocation),
+                      "pack": pack};
+
           socket.send(JSON.stringify(data));
         });
 
@@ -245,7 +364,14 @@
           //get the selected world name
           var name = $('#home-worldList :selected').val();
           // preparing to request world data
-          var data = {"type":"join","world":name, "gps":JSON.stringify(currentLocation)};
+
+          setLocation();
+          var pack = {"pos" : JSON.stringify(selfposition),
+                      "userid" : userid};
+          var data = {"type":"join",
+                      "world":name,
+                      "gps":JSON.stringify(currentLocation),
+                      "pack": pack};
           socket.send(JSON.stringify(data));
 
           // show game view
@@ -394,10 +520,23 @@
         </div>
       </div>
       </div>
-    </div>
-  </div>
-    <!-- Bootstrap -->
-    <script src="bootstrap/js/bootstrap.min.js"></script>
+
+      <div class="col-md-6" style="display:none;" id="right-bottom">
+      <div id="show">
+        <h3 id="online"></h3>
+        <hr>
+        <p id="ll"></p>
+        <p id="lll"></p>
+        <canvas id="radar" height="400px" width="400px" style="border:1px solid #c3c3c3;">
+        </canvas>
+      </div>
+      </div>
+
+
+		</div>
+	</div>
+		<!-- Bootstrap -->
+		<script src="bootstrap/js/bootstrap.min.js"></script>
   </body>
 </html>
 
