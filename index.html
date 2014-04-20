@@ -403,6 +403,7 @@
         var height = $(window).height()-100;
         $("#world").css('height', height);
         $("#map-canvas").css('height', height/2);
+        $("#radar").css('height', height/2);
 
         $("#world img").draggable({ containment: $("#world") }); 
         $("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });

@@ -46,6 +46,10 @@
 #left {
 	text-align: center;
 }
+#right-bottom {
+	text-align: center;
+	margin: 0 auto;
+}
 h3 {
 	text-align: center;
 	word-wrap:break-word;
