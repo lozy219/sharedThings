@@ -42,10 +42,17 @@ wss.on('connection', function(ws) {
 		if (changed.type == "getPos") {
 			console.log(changed);
 			// get the position of the correspoding world
-			var posi = player_position[changed.world];
-			var initial = JSON.stringify({type:"pos", allposition:JSON.stringify(posi), world:changed.world});
-			console.log(initial);
-			wss.broadcast(initial);
+			if (player_position[changed.world] != undefined) {
+				for (var key = 0; key < player_position[changed.world]["pack"].length; key++) {
+					if (player_position[changed.world]["pack"][key]["userid"] == changed.userid) {
+						player_position[changed.world]["pack"][key]["position"] = JSON.parse(changed.newPos);
+						var posi = player_position[changed.world]["pack"];
+						var initial = JSON.stringify({type:"pos", allposition:JSON.stringify(posi), world:changed.world});
+						console.log(initial);
+						wss.broadcast(initial);
+					}
+				}
+			}
 		}
 
 		if (changed.type == "move") {
@@ -85,11 +92,15 @@ wss.on('connection', function(ws) {
 
 				}
 				// adding the position of players
-				var position = JSON.parse(changed.pos);
+				var position = JSON.parse(changed.pack.pos);
 				if (player_position[changed.world] == undefined) {
 					player_position[changed.world] = [];
+					player_position[changed.world]["pack"] = [];
 				}
-				player_position[changed.world].push(position);
+				var pack = {"userid" : changed.pack.userid,
+							"position" : position};
+				player_position[changed.world]["pack"].push(pack);
+
 
 				// update the world list data		
 				serverNameList.push(changed.world);
@@ -121,11 +132,14 @@ wss.on('connection', function(ws) {
 			}
 			
 			// adding the position of players
-			var position = JSON.parse(changed.pos);
+			var position = JSON.parse(changed.pack.pos);
 			if (player_position[changed.world] == undefined) {
 				player_position[changed.world] = [];
+				player_position[changed.world]["pack"] = [];
 			}
-			player_position[changed.world].push(position);
+			var pack = {"userid" : changed.pack.userid,
+						"position" : position};
+			player_position[changed.world]["pack"].push(pack);
 
 			// send a success message
 			ws.send(JSON.stringify({type:"success", world:changed.world, data:"Join successfully."}));

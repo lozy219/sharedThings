@@ -35,7 +35,7 @@
 
 			
 			$(function() {
-				socket = new WebSocket("ws://128.199.215.175:"+port);
+				socket = new WebSocket("ws://cp3101b-1.comp.nus.edu.sg:"+port);
 				$("#world img").draggable(); 
 				$("#world img").on("dragstart", function(event, ui) { logDrag(event, ui); });
 				$("#world img").on("dragstop" , function(event, ui) { logDrag(event, ui); });
@@ -183,20 +183,6 @@
 		</script>
 	</head>
 	<body>
-		<div id="option">
-			<form>
-				<label>Create a new world</label>
-				<input type="text" name="name" id='input-name'>
-				<input type="submit" id="world-create" value="Create">
-				<label>Or select from existing world</label>
-				<select id = "worldList">
-             	</select>
-             	<input type="submit" id="world-join" value="Go">
-			</form>
-			<div>
-				Current world: <span id="world-name"></span>
-			</div>
-		</div>
 		<div id="world" style="border : 1px red solid">
 			<img id="x1" src="images/x.gif" style="z-index:2;" class="draggable" />
 			<img id="x2" src="images/x.gif" style="z-index:2;" class="draggable" />
