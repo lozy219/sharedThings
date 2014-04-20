@@ -389,6 +389,12 @@
           $('#right').hide();
         });
 
+        $('#btn-reset').click(function(){
+           var data = {"type":"reset", "world":worldname};
+          socket.send(JSON.stringify(data));
+
+        });
+
 
         var height = $(window).height()-100;
         $("#world").css('height', height);
