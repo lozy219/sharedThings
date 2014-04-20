@@ -16,6 +16,8 @@ var world_location = {};
 
 var serverNameList=[];
 
+var player_position = {};
+
 wss.on('close', function() {
     console.log('disconnected');
 });
@@ -36,6 +38,15 @@ wss.on('connection', function(ws) {
 
 	ws.on('message', function(message) {
 		var changed = JSON.parse(message);
+
+		if (changed.type == "getPos") {
+			console.log(changed);
+			// get the position of the correspoding world
+			var posi = player_position[changed.world];
+			var initial = JSON.stringify({type:"pos", allposition:JSON.stringify(posi), world:changed.world});
+			console.log(initial);
+			wss.broadcast(initial);
+		}
 
 		if (changed.type == "move") {
 			console.log(changed);
@@ -72,8 +83,14 @@ wss.on('connection', function(ws) {
 					world_location[changed.world] =[];
 					world_location[changed.world].push(geoLocation);
 
-					
 				}
+				// adding the position of players
+				var position = JSON.parse(changed.pos);
+				if (player_position[changed.world] == undefined) {
+					player_position[changed.world] = [];
+				}
+				player_position[changed.world].push(position);
+
 				// update the world list data		
 				serverNameList.push(changed.world);
 				// sending the world name list
@@ -103,6 +120,13 @@ wss.on('connection', function(ws) {
 				wss.broadcast(JSON.stringify({type:"geo", world:changed.world, data:[changed.gps]}));
 			}
 			
+			// adding the position of players
+			var position = JSON.parse(changed.pos);
+			if (player_position[changed.world] == undefined) {
+				player_position[changed.world] = [];
+			}
+			player_position[changed.world].push(position);
+
 			// send a success message
 			ws.send(JSON.stringify({type:"success", world:changed.world, data:"Join successfully."}));
 			
